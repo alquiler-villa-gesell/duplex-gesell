@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alquiler Dúplex Villa Gesell</title>
+    <style>
+        :root {
+            --primary: #ff385c;
+            --primary-dark: #d70466;
+            --text-dark: #222222;
+            --text-gray: #717171;
+            --border-color: #dddddd;
+            --bg-light: #f7f7f7;
+            --success: #12805c;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .left-panel, .right-panel {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 8px;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 230px;
+            margin-bottom: 20px;
+        }
+
+        .gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-side {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            color: var(--text-gray);
+            font-size: 14px;
+            margin-bottom: 18px;
+        }
+
+        .inputs-grid {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .input-row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .input-group {
+            flex: 1;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group:first-child {
+            border-right: 1px solid var(--border-color);
+        }
+
+        .input-group label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .input-group input {
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-dark);
+            background: transparent;
+            width: 100%;
+        }
+
+        .breakdown {
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .line-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .total-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: 700;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #e61e4f 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        /* Panel de Administración Privado */
+        .earnings-card {
+            background: linear-gradient(135deg, #12805c 0%, #0b573e 100%);
+            color: white;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .earnings-card h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .earnings-amount-ars {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .reservation-card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .reservation-card h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .reservation-card p {
+            font-size: 12px;
+            color: var(--text-gray);
+            margin-bottom: 6px;
+        }
+
+        .discount-controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .discount-controls select, .discount-controls input {
+            padding: 4px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .discount-controls button {
+            padding: 4px 8px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-delete {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: #c13515;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 13px;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    
+    <!-- VISTA PÚBLICA (Para el cliente) -->
+    <div class="left-panel">
+        <div class="gallery">
+            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" alt="Playa">
+            <div class="gallery-side">
+                <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80" alt="Dúplex">
+                <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=400&q=80" alt="Interior">
+            </div>
+        </div>
+
+        <div class="header">
+            <h2>Dúplex en Villa Gesell</h2>
+            <p>Avenida 1 y Paseo 140 • Cotizá tu estadía y consultá disponibilidad</p>
+        </div>
+
+        <!-- REEMPLAZAR EL ENLACE DE ABAJO POR EL TUYO DE FORMSPREE -->
+        <form action="https://formspree.io/f/mwlkzyga" method="POST" onsubmit="guardarAutomatico(event)">
+            <div class="inputs-grid">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="checkin">Llegada</label>
+                        <input type="date" id="checkin" name="Llegada" min="2026-11-01" max="2027-03-31" value="2026-12-16" required onchange="calcularCotizacion()">
+                    </div>
+                    <div class="input-group">
+                        <label for="checkout">Salida</label>
+                        <input type="date" id="checkout" name="Salida" min="2026-11-01" max="2027-03-31" value="2026-12-30" required onchange="calcularCotizacion()">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="guestName">Nombre Completo</label>
+                    <input type="text" id="guestName" name="Nombre" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <div class="input-group" style="border-top: 1px solid var(--border-color);">
+                    <label for="phone">Teléfono / WhatsApp</label>
+                    <input type="tel" id="phone" name="Telefono" placeholder="Ej: +54 9 11..." required>
+                </div>
+            </div>
+
+            <input type="hidden" id="hiddenNoches" name="Noches">
+            <input type="hidden" id="hiddenTotalARS" name="Total_ARS">
+            <input type="hidden" id="hiddenTotalUSD" name="Total_USD">
+
+            <div class="breakdown">
+                <div class="line-item">
+                    <span id="rateLabel">Noches</span>
+                    <div>
+                        <strong id="subtotalArs">$ 0</strong>
+                        <span style="color: var(--text-gray); font-size: 12px;" id="subtotalUsd">(USD 0)</span>
+                    </div>
+                </div>
+
+                <div class="total-item">
+                    <span>Total Estimado</span>
+                    <div style="text-align: right;">
+                        <span style="color: var(--primary);" id="totalArs">$ 0</span><br>
+                        <span style="font-size: 13px; color: var(--text-gray);" id="totalUsd">(USD 0)</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Solicitar Reserva</button>
+        </form>
+    </div>
+
+    <!-- PANEL PRIVADO ADMINISTRADOR (Tus reservas y ganancias) -->
+    <div class="right-panel">
+        <div class="earnings-card">
+            <h4>Total Confirmado Acumulado</h4>
+            <div class="earnings-amount-ars" id="totalEarningsARS">$ 0</div>
+            <div style="font-size: 13px; opacity: 0.9;" id="totalEarningsUSD">USD 0</div>
+        </div>
+
+        <h3 style="font-size: 16px; margin-bottom: 12px; display: flex; justify-content: space-between;">
+            <span>Reservas Agendadas</span>
+            <span id="resCount" style="font-weight: normal; color: var(--text-gray);">(0)</span>
+        </h3>
+        
+        <div id="reservationsList">
+            <div class="empty-state">No hay reservas registradas.</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const USD_RATE = 1512.76;
+
+    function getDailyPriceUSD(date) {
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        if (month === 11) return 50;
+        if (month === 12) {
+            if (day <= 15) return 70;
+            return 115;
+        }
+        if (month === 1) {
+            if (day <= 15) return 125;
+            return 135;
+        }
+        if (month === 2) {
+            if (day <= 14) return 135;
+            return 85;
+        }
+        if (month === 3) {
+            if (day <= 15) return 65;
+            return 50;
+        }
+        return 50;
+    }
+
+    function formatARS(val) { return '$ ' + Math.round(val).toLocaleString('es-AR'); }
+    function formatUSD(val) { return 'USD ' + Math.round(val).toLocaleString('en-US'); }
+
+    let currentState = null;
+
+    function calcularCotizacion() {
+        const checkinInput = document.getElementById('checkin').value;
+        const checkoutInput = document.getElementById('checkout').value;
+
+        if (!checkinInput || !checkoutInput) return;
+
+        const checkin = new Date(checkinInput + 'T00:00:00');
+        const checkout = new Date(checkoutInput + 'T00:00:00');
+
+        if (checkout <= checkin) return;
+
+        let nights = 0;
+        let subtotalUSD = 0;
+        let current = new Date(checkin);
+
+        while (current < checkout) {
+            subtotalUSD += getDailyPriceUSD(current);
+            nights++;
+            current.setDate(current.getDate() + 1);
+        }
+
+        let discountRate = 0;
+        if (nights >= 15) discountRate = 0.15;
+        else if (nights >= 10) discountRate = 0.10;
+        else if (nights >= 6) discountRate = 0.05;
+
+        const discountUSD = Math.round(subtotalUSD * discountRate);
+        const totalUSD = subtotalUSD - discountUSD;
+
+        const subtotalARS = subtotalUSD * USD_RATE;
+        const totalARS = totalUSD * USD_RATE;
+
+        document.getElementById('rateLabel').innerText = `${nights} noches`;
+        document.getElementById('subtotalArs').innerText = formatARS(subtotalARS);
+        document.getElementById('subtotalUsd').innerText = `(${formatUSD(subtotalUSD)})`;
+
+        document.getElementById('totalArs').innerText = formatARS(totalARS);
+        document.getElementById('totalUsd').innerText = `(${formatUSD(totalUSD)})`;
+
+        document.getElementById('hiddenNoches').value = nights;
+        document.getElementById('hiddenTotalARS').value = formatARS(totalARS);
+        document.getElementById('hiddenTotalUSD').value = formatUSD(totalUSD);
+
+        currentState = { checkin: checkinInput, checkout: checkoutInput, nights, totalARS, totalUSD };
+    }
+
+    function getStoredReservations() {
+        return JSON.parse(localStorage.getItem('gesell_web_reservas') || '[]');
+    }
+
+    function saveReservations(list) {
+        localStorage.setItem('gesell_web_reservas', JSON.stringify(list));
+        renderReservations();
+    }
+
+    function guardarAutomatico(e) {
+        if (!currentState) return;
+        const name = document.getElementById('guestName').value || 'Inquilino Web';
+        
+        const list = getStoredReservations();
+        list.push({
+            id: Date.now(),
+            guestName: name,
+            checkin: currentState.checkin,
+            checkout: currentState.checkout,
+            nights: currentState.nights,
+            baseTotalARS: currentState.totalARS,
+            discountType: 'ars',
+            discountValue: 0
+        });
+        
+        saveReservations(list);
+    }
+
+    function aplicarDescuento(id) {
+        const type = document.getElementById(`type_${id}`).value;
+        const val = parseFloat(document.getElementById(`val_${id}`).value) || 0;
+
+        const list = getStoredReservations();
+        const index = list.findIndex(r => r.id === id);
+        if (index !== -1) {
+            list[index].discountType = type;
+            list[index].discountValue = val;
+            saveReservations(list);
+        }
+    }
+
+    function eliminarReserva(id) {
+        if (confirm('¿Eliminar reserva?')) {
+            saveReservations(getStoredReservations().filter(r => r.id !== id));
+        }
+    }
+
+    function renderReservations() {
+        const list = getStoredReservations();
+        const container = document.getElementById('reservationsList');
+        document.getElementById('resCount').innerText = `(${list.length})`;
+
+        let accumARS = 0;
+
+        if (list.length === 0) {
+            container.innerHTML = '<div class="empty-state">No hay reservas registradas.</div>';
+            document.getElementById('totalEarningsARS').innerText = formatARS(0);
+            document.getElementById('totalEarningsUSD').innerText = formatUSD(0);
+            return;
+        }
+
+        let html = '';
+        list.forEach(res => {
+            let discARS = res.discountType === 'percent' ? res.baseTotalARS * (res.discountValue / 100) : res.discountValue || 0;
+            let finalARS = Math.max(0, res.baseTotalARS - discARS);
+            accumARS += finalARS;
+
+            html += `
+                <div class="reservation-card">
+                    <button class="btn-delete" onclick="eliminarReserva(${res.id})">&times;</button>
+                    <h4>${res.guestName}</h4>
+                    <p>📅 ${res.checkin} al ${res.checkout} (${res.nights} noches)</p>
+                    <div style="font-weight: bold; font-size: 14px;">${formatARS(finalARS)} <span style="font-size: 11px; font-weight: normal; color: var(--text-gray);">(${formatUSD(finalARS / USD_RATE)})</span></div>
+                    
+                    <div class="discount-controls">
+                        <select id="type_${res.id}">
+                            <option value="ars" ${res.discountType === 'ars' ? 'selected' : ''}>$</option>
+                            <option value="percent" ${res.discountType === 'percent' ? 'selected' : ''}>%</option>
+                        </select>
+                        <input type="number" id="val_${res.id}" placeholder="Monto" value="${res.discountValue || ''}" style="width: 70px;">
+                        <button onclick="aplicarDescuento(${res.id})">Aplicar</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        document.getElementById('totalEarningsARS').innerText = formatARS(accumARS);
+        document.getElementById('totalEarningsUSD').innerText = formatUSD(accumARS / USD_RATE);
+    }
+
+    window.onload = function() {
+        calcularCotizacion();
+        renderReservations();
+    };
+</script>
+
+</body>
+</html>
