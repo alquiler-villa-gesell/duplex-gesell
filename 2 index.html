@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dúplex en Villa Gesell | Alquiler Directo</title>
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Phosphor Icons para iconos profesionales planos -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --primary: #ff385c;
+            --primary-dark: #d70466;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --border: #e2e8f0;
+            --bg-light: #f8fafc;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #ffffff; color: var(--text-dark); -webkit-font-smoothing: antialiased; padding-bottom: 60px; }
+
+        .container { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+
+        /* Header */
+        header { padding: 32px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+        .property-title { font-size: 32px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.5px; }
+        .property-subtitle { font-size: 15px; color: var(--text-gray); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+
+        /* Layout Main Grid */
+        .main-grid { display: grid; grid-template-columns: 1fr 400px; gap: 40px; }
+
+        /* Gallery */
+        .gallery-container { width: 100%; }
+        .main-photo-wrapper { position: relative; height: 420px; border-radius: var(--radius-lg); overflow: hidden; background: #000; box-shadow: var(--shadow); }
+        .main-photo { width: 100%; height: 100%; object-fit: cover; cursor: pointer; transition: opacity 0.3s; }
+        .photo-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--text-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: 0.2s; }
+        .photo-nav:hover { background: #fff; transform: translateY(-50%) scale(1.05); }
+        .photo-nav.prev { left: 16px; }
+        .photo-nav.next { right: 16px; }
+        .photo-counter { position: absolute; bottom: 16px; left: 16px; background: rgba(0,0,0,0.7); color: white; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 20px; backdrop-filter: blur(4px); }
+
+        .thumbnails-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+        .thumb { height: 90px; border-radius: var(--radius-md); overflow: hidden; cursor: pointer; opacity: 0.7; transition: 0.2s; border: 2px solid transparent; }
+        .thumb.active, .thumb:hover { opacity: 1; border-color: var(--primary); }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Stay Card (Booking Form) */
+        .stay-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow); position: sticky; top: 20px; }
+        .stay-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+        .stay-card p.subtitle { font-size: 13px; color: var(--text-gray); margin-bottom: 20px; }
+
+        .form-box { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 20px; }
+        .form-row { display: flex; border-bottom: 1px solid var(--border); }
+        .form-group { flex: 1; padding: 10px 14px; background: white; }
+        .form-group:first-child { border-right: 1px solid var(--border); }
+        .form-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-dark); margin-bottom: 2px; }
+        .form-group input, .form-group select { width: 100%; border: none; outline: none; font-size: 14px; color: var(--text-dark); background: transparent; }
+
+        .price-breakdown { font-size: 14px; margin-bottom: 20px; }
+        .price-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-gray); }
+        .price-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; color: var(--text-dark); }
+        .price-total .ars-total { font-size: 13px; color: var(--text-gray); text-align: right; font-weight: 500; margin-top: 2px; }
+
+        .btn-reserve { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 14px rgba(255, 56, 92, 0.3); }
+        .btn-reserve:hover { opacity: 0.95; transform: translateY(-1px); }
+        .btn-reserve:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .direct-deal { text-align: center; font-size: 12px; color: var(--text-gray); margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+        /* Features strip */
+        .features-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin: 40px 0; padding: 24px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
+        .feature-item i { font-size: 28px; color: var(--primary); margin-bottom: 8px; display: block; }
+        .feature-item strong { display: block; font-size: 15px; color: var(--text-dark); }
+        .feature-item span { font-size: 12px; color: var(--text-gray); }
+
+        /* Sections Content */
+        .section-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+        .section-desc { font-size: 15px; color: var(--text-gray); line-height: 1.6; margin-bottom: 30px; }
+
+        .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+
+        .map-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+        .map-box { height: 160px; background: #e2e8f0; border-radius: var(--radius-md); margin-bottom: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--text-gray); position: relative; }
+
+        /* Amenities Grid */
+        .amenities-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+        .amenity-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; text-align: center; font-size: 13px; font-weight: 600; }
+        .amenity-card i { font-size: 24px; color: var(--text-dark); display: block; margin-bottom: 6px; }
+
+        /* FAQ Accordion */
+        .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
+        .faq-item { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background: white; cursor: pointer; }
+        .faq-q { font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .faq-a { font-size: 14px; color: var(--text-gray); margin-top: 8px; display: none; line-height: 1.5; }
+        .faq-item.open .faq-a { display: block; }
+
+        /* Lightbox Modal */
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.92); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
+        .lightbox img { max-width: 90%; max-height: 85vh; border-radius: 8px; }
+        .lightbox-close { position: absolute; top: 24px; right: 24px; color: white; font-size: 32px; cursor: pointer; }
+
+        /* Error message */
+        .error-msg { color: #dc2626; font-size: 12px; font-weight: 600; margin-bottom: 12px; display: none; text-align: center; }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .features-strip { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+            .two-cols, .faq-grid { grid-template-columns: 1fr; }
+            .amenities-grid { grid-template-columns: repeat(2, 1fr); }
+            .main-photo-wrapper { height: 280px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1 class="property-title" id="txtTitle">Dúplex en Villa Gesell</h1>
+        <div class="property-subtitle"><i class="ph ph-map-pin"></i> <span id="txtAddress">Avenida 1 y Paseo 140</span></div>
+    </header>
+
+    <div class="main-grid">
+        <!-- Galería Principal -->
+        <div class="gallery-container">
+            <div class="main-photo-wrapper">
+                <button class="photo-nav prev" onclick="prevSlide()"><i class="ph ph-caret-left"></i></button>
+                <img id="mainPhoto" class="main-photo" src="" onclick="openLightbox()" alt="Foto Dúplex">
+                <button class="photo-nav next" onclick="nextSlide()"><i class="ph ph-caret-right"></i></button>
+                <div class="photo-counter" id="photoCounter">1 / 1</div>
+            </div>
+            <div class="thumbnails-grid" id="thumbnailsGrid">
+                <!-- Se cargan dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Tarjeta Tu Estadía -->
+        <aside>
+            <div class="stay-card">
+                <h3>Tu estadía</h3>
+                <p class="subtitle">Completá tus datos para solicitar la reserva</p>
+
+                <form id="bookingForm" onsubmit="submitBooking(event)">
+                    <div class="form-box">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>LLEGADA</label>
+                                <input type="date" id="checkin" required onchange="calculateQuote()">
+                            </div>
+                            <div class="form-group">
+                                <label>SALIDA</label>
+                                <input type="date" id="checkout" required onchange="calculateQuote()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>HUÉSPEDES</label>
+                            <select id="guests">
+                                <option value="1">1 persona</option>
+                                <option value="2" selected>2 personas</option>
+                                <option value="3">3 personas</option>
+                                <option value="4">4 personas</option>
+                                <option value="5">5 personas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="error-msg" id="errorMsg">⚠️ Las fechas seleccionadas no están disponibles.</div>
+
+                    <div class="price-breakdown">
+                        <div class="price-row">
+                            <span>Precio por noche</span>
+                            <strong id="nightlyRate">USD 90</strong>
+                        </div>
+                        <div class="price-row">
+                            <span>Noches</span>
+                            <strong id="lblNights">0</strong>
+                        </div>
+                        <div class="price-row">
+                            <span>Subtotal</span>
+                            <strong id="lblSubtotal">USD 0</strong>
+                        </div>
+                        <div class="price-total">
+                            <span>TOTAL ESTIMADO</span>
+                            <div>
+                                <div style="color: var(--primary);" id="lblTotalUSD">USD 0</div>
+                                <div class="ars-total" id="lblTotalARS">≈ $ 0 (ARS)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-box">
+                        <div class="form-group" style="border-bottom: 1px solid var(--border);">
+                            <label>Nombre completo *</label>
+                            <input type="text" id="guestName" placeholder="Tu nombre y apellido" required>
+                        </div>
+                        <div class="form-group" style="border-bottom: 1px solid var(--border);">
+                            <label>Teléfono / WhatsApp *</label>
+                            <input type="tel" id="guestPhone" placeholder="Ej: 114343332" required>
+                        </div>
+                        <div class="form-group">
+                            <label>E-mail *</label>
+                            <input type="email" id="guestEmail" placeholder="tu@email.com" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-reserve" id="btnSubmit">Solicitar reserva</button>
+                </form>
+
+                <div class="direct-deal"><i class="ph ph-shield-check"></i> Sin intermediarios. Trato directo con el propietario.</div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Franja Características -->
+    <section class="features-strip">
+        <div class="feature-item"><i class="ph ph-frame-corners"></i><strong>45 m²</strong><span>Superficie total</span></div>
+        <div class="feature-item"><i class="ph ph-waves"></i><strong>1 cuadra</strong><span>de la playa</span></div>
+        <div class="feature-item"><i class="ph ph-car"></i><strong>Cochera</strong><span>Cerrada + guarda cosas</span></div>
+        <div class="feature-item"><i class="ph ph-armchair"></i><strong>Amoblado</strong><span>Listo para usar</span></div>
+        <div class="feature-item"><i class="ph ph-sun-dim"></i><strong>Balcón</strong><span>Con vista</span></div>
+        <div class="feature-item"><i class="ph ph-compass"></i><strong>Orientación Este</strong><span>Muy luminoso</span></div>
+    </section>
+
+    <!-- Información y Ubicación -->
+    <div class="two-cols">
+        <div>
+            <h2 class="section-title">Tu lugar en Villa Gesell</h2>
+            <p class="section-desc" id="txtDescription">Disfrutá de un dúplex cómodo y funcional, ubicado a solo una cuadra de la playa. Ideal para parejas, familias o amigos que buscan descanso, comodidad y una ubicación privilegiada.</p>
+        </div>
+        <div>
+            <div class="map-card">
+                <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 10px;">Ubicación</h3>
+                <div class="map-box">
+                    <i class="ph ph-map-pin" style="font-size: 32px; color: var(--primary);"></i>
+                </div>
+                <div style="font-size: 14px; font-weight: 600;" id="txtMapAddress">Avenida 1 y Paseo 140</div>
+                <div style="font-size: 12px; color: var(--text-gray); margin-bottom: 10px;">Villa Gesell, Buenos Aires</div>
+                <a href="https://maps.google.com" target="_blank" style="color: var(--primary); font-size: 13px; font-weight: 700; text-decoration: none;">Ver en Google Maps →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comodidades -->
+    <h2 class="section-title">Comodidades</h2>
+    <div class="amenities-grid">
+        <div class="amenity-card"><i class="ph ph-cooking-pot"></i>Cocina equipada</div>
+        <div class="amenity-card"><i class="ph ph-snowflake"></i>Heladera</div>
+        <div class="amenity-card"><i class="ph ph-television"></i>TV</div>
+        <div class="amenity-card"><i class="ph ph-wifi-high"></i>WiFi</div>
+        <div class="amenity-card"><i class="ph ph-car"></i>Cochera</div>
+        <div class="amenity-card"><i class="ph ph-sun"></i>Balcón</div>
+        <div class="amenity-card"><i class="ph ph-fire"></i>Gas envasado</div>
+        <div class="amenity-card"><i class="ph ph-wind"></i>Ventilación cruzada</div>
+    </div>
+
+    <!-- Preguntas Frecuentes -->
+    <h2 class="section-title">Información de la estadía</h2>
+    <div class="faq-grid">
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">¿Cómo es el check-in? <i class="ph ph-plus"></i></div>
+            <div class="faq-a">El ingreso es a partir de las 14:00 hs y el check-out hasta las 10:00 hs.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">¿Qué incluye? <i class="ph ph-plus"></i></div>
+            <div class="faq-a">Incluye vajilla completa, electrodomésticos, TV por cable y WiFi.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">¿Se aceptan mascotas? <i class="ph ph-plus"></i></div>
+            <div class="faq-a">Consultar previamente según el tamaño y tipo de mascota.</div>
+        </div>
+        <div class="faq-item" onclick="toggleFaq(this)">
+            <div class="faq-q">¿Hay cochera? <i class="ph ph-plus"></i></div>
+            <div class="faq-a">Sí, dispone de espacio cubierto cerrado para guardar un vehículo.</div>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox Modal -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightboxImg" src="">
+</div>
+
+<script>
+    // CONFIGURACIÓN FIREBASE (REEMPLAZAR CON TUS CLAVES SI ES NECESARIO)
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "tu-proyecto.firebaseapp.com",
+        databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
+        projectId: "tu-proyecto",
+        storageBucket: "tu-proyecto.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:123456789:web:abc123def456"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const USD_RATE = 1512.76;
+    let photos = [
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80"
+    ];
+    let currentPhotoIdx = 0;
+    let existingReservations = [];
+
+    // Lógica Galería
+    function updateGalleryUI() {
+        if(photos.length === 0) return;
+        document.getElementById('mainPhoto').src = photos[currentPhotoIdx];
+        document.getElementById('photoCounter').innerText = `${currentPhotoIdx + 1} / ${photos.length}`;
+        
+        const grid = document.getElementById('thumbnailsGrid');
+        grid.innerHTML = '';
+        photos.slice(0, 4).forEach((url, i) => {
+            const thumb = document.createElement('div');
+            thumb.className = `thumb ${i === currentPhotoIdx ? 'active' : ''}`;
+            thumb.onclick = () => { currentPhotoIdx = i; updateGalleryUI(); };
+            thumb.innerHTML = `<img src="${url}">`;
+            grid.appendChild(thumb);
+        });
+    }
+
+    function nextSlide() { currentPhotoIdx = (currentPhotoIdx + 1) % photos.length; updateGalleryUI(); }
+    function prevSlide() { currentPhotoIdx = (currentPhotoIdx - 1 + photos.length) % photos.length; updateGalleryUI(); }
+    setInterval(nextSlide, 4000);
+
+    function openLightbox() {
+        document.getElementById('lightboxImg').src = photos[currentPhotoIdx];
+        document.getElementById('lightbox').style.display = 'flex';
+    }
+    function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+    function toggleFaq(el) { el.classList.toggle('open'); }
+
+    // Cotización y Fechas
+    function calculateQuote() {
+        const inVal = document.getElementById('checkin').value;
+        const outVal = document.getElementById('checkout').value;
+        const err = document.getElementById('errorMsg');
+        const btn = document.getElementById('btnSubmit');
+
+        if(!inVal || !outVal) return;
+
+        const reqIn = new Date(inVal + 'T00:00:00');
+        const reqOut = new Date(outVal + 'T00:00:00');
+
+        if(reqOut <= reqIn) {
+            err.innerText = "⚠️ La salida debe ser posterior a la llegada.";
+            err.style.display = 'block';
+            btn.disabled = true;
+            return;
+        }
+
+        const isOverlap = existingReservations.some(r => {
+            if(r.status === 'Cancelada') return false;
+            const exIn = new Date(r.checkin + 'T00:00:00');
+            const exOut = new Date(r.checkout + 'T00:00:00');
+            return (reqIn < exOut && reqOut > exIn);
+        });
+
+        if(isOverlap) {
+            err.innerText = "⚠️ Las fechas seleccionadas no están disponibles.";
+            err.style.display = 'block';
+            btn.disabled = true;
+            return;
+        }
+
+        err.style.display = 'none';
+        btn.disabled = false;
+
+        const nights = Math.round((reqOut - reqIn) / (1000 * 60 * 60 * 24));
+        const subtotalUSD = nights * 90;
+        const totalARS = subtotalUSD * USD_RATE;
+
+        document.getElementById('lblNights').innerText = nights;
+        document.getElementById('lblSubtotal').innerText = `USD ${subtotalUSD}`;
+        document.getElementById('lblTotalUSD').innerText = `USD ${subtotalUSD}`;
+        document.getElementById('lblTotalARS').innerText = `≈ $ ${Math.round(totalARS).toLocaleString('es-AR')} (ARS)`;
+    }
+
+    function submitBooking(e) {
+        e.preventDefault();
+        const inVal = document.getElementById('checkin').value;
+        const outVal = document.getElementById('checkout').value;
+        const nights = parseInt(document.getElementById('lblNights').innerText);
+        const totalUSD = nights * 90;
+
+        const booking = {
+            guestName: document.getElementById('guestName').value,
+            phone: document.getElementById('guestPhone').value,
+            email: document.getElementById('guestEmail').value,
+            guests: document.getElementById('guests').value,
+            checkin: inVal,
+            checkout: outVal,
+            nights: nights,
+            baseTotalUSD: totalUSD,
+            baseTotalARS: totalUSD * USD_RATE,
+            exchangeRate: USD_RATE,
+            status: "Pendiente",
+            createdTimestamp: new Date().toLocaleString('es-AR')
+        };
+
+        db.ref('reservas').push(booking, (err) => {
+            if(!err) {
+                alert('¡Solicitud de reserva enviada con éxito!');
+                location.reload();
+            }
+        });
+    }
+
+    // Carga de Firebase
+    db.ref('reservas').on('value', snap => {
+        existingReservations = [];
+        snap.forEach(c => { existingReservations.push(c.val()); });
+        calculateQuote();
+    });
+
+    db.ref('fotos').on('value', snap => {
+        const val = snap.val();
+        if(val) {
+            if(Array.isArray(val.gallery)) photos = val.gallery;
+            else if(val.imgMain) photos = [val.imgMain, val.imgSub1, val.imgSub2].filter(Boolean);
+            updateGalleryUI();
+        }
+    });
+
+    db.ref('contenido').on('value', snap => {
+        const c = snap.val();
+        if(c) {
+            if(c.titulo) document.getElementById('txtTitle').innerText = c.titulo;
+            if(c.direccion) {
+                document.getElementById('txtAddress').innerText = c.direccion;
+                document.getElementById('txtMapAddress').innerText = c.direccion;
+            }
+            if(c.descripcion) document.getElementById('txtDescription').innerText = c.descripcion;
+        }
+    });
+
+    updateGalleryUI();
+</script>
+</body>
+</html>
