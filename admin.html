@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Dúplex en Villa Gesell</title>
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --primary: #ff385c;
+            --primary-dark: #d70466;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --border: #e2e8f0;
+            --bg-light: #f8fafc;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #ffffff; color: var(--text-dark); padding-bottom: 60px; }
+
+        /* Protection Modal */
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.95); display: flex; justify-content: center; align-items: center; z-index: 99999; }
+        .login-box { background: white; padding: 36px; border-radius: 20px; max-width: 360px; width: 90%; text-align: center; }
+        .login-box input { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); margin: 16px 0; font-size: 16px; text-align: center; outline: none; }
+
+        .container { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+
+        /* Top Bar Admin Control */
+        .admin-topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .btn-toggle-admin { background: #e2e8f0; color: var(--text-dark); border: none; padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .btn-toggle-admin.active { background: var(--primary); color: white; }
+
+        /* Header */
+        header { padding: 10px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+        .property-title { font-size: 32px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
+        .property-subtitle { font-size: 15px; color: var(--text-gray); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+
+        /* Edit Pencil Buttons */
+        .btn-edit { background: white; border: 1px solid var(--border); color: var(--text-dark); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: none; align-items: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        body.admin-mode-on .btn-edit { display: inline-flex; }
+
+        /* Grid */
+        .main-grid { display: grid; grid-template-columns: 1fr 400px; gap: 40px; }
+
+        /* Gallery */
+        .main-photo-wrapper { position: relative; height: 420px; border-radius: var(--radius-lg); overflow: hidden; background: #000; box-shadow: var(--shadow); }
+        .main-photo { width: 100%; height: 100%; object-fit: cover; }
+        .thumbnails-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+        .thumb { height: 90px; border-radius: var(--radius-md); overflow: hidden; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Stay Card */
+        .stay-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow); position: sticky; top: 20px; }
+        .stay-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+
+        .form-box { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 20px; }
+        .form-row { display: flex; border-bottom: 1px solid var(--border); }
+        .form-group { flex: 1; padding: 10px 14px; background: white; }
+        .form-group:first-child { border-right: 1px solid var(--border); }
+        .form-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-dark); margin-bottom: 2px; }
+        .form-group input, .form-group select { width: 100%; border: none; outline: none; font-size: 14px; color: var(--text-dark); background: transparent; }
+
+        /* Discount Input */
+        .discount-row { display: flex; align-items: center; gap: 6px; background: #f1f5f9; padding: 6px 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; }
+        .discount-row select, .discount-row input { border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 12px; }
+
+        .price-breakdown { font-size: 14px; margin-bottom: 20px; }
+        .price-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-gray); }
+        .price-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; border-top: 1px solid var(--border); padding-top: 14px; margin-top: 14px; color: var(--text-dark); }
+
+        .btn-reserve { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 16px; font-weight: 700; cursor: pointer; }
+
+        /* Features Strip */
+        .features-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin: 40px 0; padding: 24px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
+        .feature-item i { font-size: 28px; color: var(--primary); margin-bottom: 8px; display: block; }
+        .feature-item strong { display: block; font-size: 15px; color: var(--text-dark); }
+        .feature-item span { font-size: 12px; color: var(--text-gray); }
+
+        /* Sections Content */
+        .section-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+        .map-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+        .map-box { height: 160px; background: #e2e8f0; border-radius: var(--radius-md); margin-bottom: 14px; display: flex; align-items: center; justify-content: center; }
+
+        .amenities-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
+        .amenity-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; text-align: center; font-size: 13px; font-weight: 600; }
+        .amenity-card i { font-size: 24px; color: var(--text-dark); display: block; margin-bottom: 6px; }
+
+        /* Reservations Table Section */
+        .reservations-section { margin-top: 60px; border-top: 2px solid var(--border); padding-top: 40px; }
+        .res-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+        .res-table th, .res-table td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        .res-table th { background: var(--bg-light); font-weight: 700; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+        .badge.Confirmada { background: #dcfce7; color: #15803d; }
+        .badge.Pendiente { background: #fef9c3; color: #a16207; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:9999; }
+        .modal-content { background: white; border-radius: var(--radius-lg); padding: 24px; max-width: 500px; width: 90%; }
+        .modal-content h3 { margin-bottom: 16px; }
+        .modal-content input, .modal-content textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .features-strip { grid-template-columns: repeat(3, 1fr); }
+            .two-cols { grid-template-columns: 1fr; }
+            .res-table { display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Modal -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>Acceso Administrativo</h2>
+        <p style="font-size: 13px; color: var(--text-gray);">Ingresá tu clave de propietario.</p>
+        <input type="password" id="passInput" placeholder="Contraseña">
+        <button class="btn-reserve" onclick="checkLogin()">Ingresar</button>
+    </div>
+</div>
+
+<div class="container" id="adminWrapper" style="display:none;">
+    <!-- Topbar Mode Switcher -->
+    <div class="admin-topbar">
+        <strong style="font-size: 14px; color: var(--text-gray);">Panel de Propietario</strong>
+        <button class="btn-toggle-admin" id="btnAdminToggle" onclick="toggleAdminMode()">
+            <i class="ph ph-gear"></i> MODO ADMIN
+        </button>
+    </div>
+
+    <header>
+        <h1 class="property-title">
+            <span id="txtTitle">Dúplex en Villa Gesell</span>
+            <button class="btn-edit" onclick="editContent('titulo', 'txtTitle')"><i class="ph ph-pencil"></i> Editar</button>
+        </h1>
+        <div class="property-subtitle">
+            <i class="ph ph-map-pin"></i> <span id="txtAddress">Avenida 1 y Paseo 140</span>
+            <button class="btn-edit" onclick="editContent('direccion', 'txtAddress')"><i class="ph ph-pencil"></i> Editar</button>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        <!-- Galería Admin -->
+        <div>
+            <div style="margin-bottom: 8px;">
+                <button class="btn-edit" onclick="openPhotoManager()"><i class="ph ph-image"></i> Editar fotos</button>
+            </div>
+            <div class="main-photo-wrapper">
+                <img id="mainPhoto" class="main-photo" src="" alt="Foto Dúplex">
+            </div>
+            <div class="thumbnails-grid" id="thumbnailsGrid"></div>
+        </div>
+
+        <!-- Tarjeta Estadía (Admin View) -->
+        <aside>
+            <div class="stay-card">
+                <h3>Tu estadía</h3>
+                <p style="font-size:13px; color:var(--text-gray); margin-bottom:16px;">Crear o modificar reservas</p>
+
+                <form id="adminBookingForm" onsubmit="submitAdminBooking(event)">
+                    <div class="form-box">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>LLEGADA</label>
+                                <input type="date" id="checkin" required onchange="calcAdminQuote()">
+                            </div>
+                            <div class="form-group">
+                                <label>SALIDA</label>
+                                <input type="date" id="checkout" required onchange="calcAdminQuote()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>HUÉSPEDES</label>
+                            <select id="guests">
+                                <option value="1">1 persona</option>
+                                <option value="2" selected>2 personas</option>
+                                <option value="3">3 personas</option>
+                                <option value="4">4 personas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Descuento Discreto -->
+                    <div class="discount-row">
+                        <span>Descuento:</span>
+                        <select id="discType" onchange="calcAdminQuote()">
+                            <option value="none">Sin Desc.</option>
+                            <option value="percent">% Porcentaje</option>
+                            <option value="fixed">$ Monto Fijo</option>
+                        </select>
+                        <input type="number" id="discVal" value="0" style="width:50px;" onchange="calcAdminQuote()">
+                    </div>
+
+                    <div class="price-breakdown">
+                        <div class="price-row"><span>Subtotal</span><strong id="lblSubtotal">USD 0</strong></div>
+                        <div class="price-row"><span>Descuento</span><strong id="lblDiscount">- USD 0</strong></div>
+                        <div class="price-total">
+                            <span>TOTAL</span>
+                            <div style="text-align:right;">
+                                <div style="color:var(--primary);" id="lblTotalUSD">USD 0</div>
+                                <div style="font-size:12px; color:var(--text-gray);" id="lblTotalARS">≈ $ 0 (ARS)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-box">
+                        <div class="form-group"><label>Nombre Completo</label><input type="text" id="guestName" required></div>
+                        <div class="form-group"><label>Teléfono</label><input type="tel" id="guestPhone" required></div>
+                        <div class="form-group"><label>Email</label><input type="email" id="guestEmail" required></div>
+                    </div>
+
+                    <button type="submit" class="btn-reserve">+ Guardar / Agregar Reserva</button>
+                </form>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Franja Características -->
+    <section class="features-strip">
+        <div class="feature-item"><i class="ph ph-frame-corners"></i><strong>45 m²</strong><span>Superficie total</span><button class="btn-edit" onclick="alert('Editar valor')"><i class="ph ph-pencil"></i></button></div>
+        <div class="feature-item"><i class="ph ph-waves"></i><strong>1 cuadra</strong><span>de la playa</span><button class="btn-edit" onclick="alert('Editar valor')"><i class="ph ph-pencil"></i></button></div>
+        <div class="feature-item"><i class="ph ph-car"></i><strong>Cochera</strong><span>Cerrada + guarda cosas</span><button class="btn-edit" onclick="alert('Editar valor')"><i class="ph ph-pencil"></i></button></div>
+        <div class="feature-item"><i class="ph ph-armchair"></i><strong>Amoblado</strong><span>Listo para usar</span><button class="btn-edit" onclick="alert('Editar valor')"><i class="ph ph-pencil"></i></button></div>
+        <div class="feature-item"><i class="ph ph-sun-dim"></i><strong>Balcón</strong><span>Con vista</span><button class="btn-edit" onclick="alert('Editar valor')"><i class="ph ph-pencil"></i></button></div>
+        <div class="feature-item"><i class="ph ph-compass"></i><strong>Orientación Este</strong><span>Muy luminoso</span><button class="btn-edit" onclick="alert('Editar valor')"><i class="ph ph-pencil"></i></button></div>
+    </section>
+
+    <!-- Información y Ubicación -->
+    <div class="two-cols">
+        <div>
+            <h2 class="section-title">
+                Tu lugar en Villa Gesell
+                <button class="btn-edit" onclick="editContent('descripcion', 'txtDescription')"><i class="ph ph-pencil"></i> Editar</button>
+            </h2>
+            <p style="font-size: 15px; color: var(--text-gray); line-height: 1.6;" id="txtDescription">Disfrutá de un dúplex cómodo y funcional, ubicado a solo una cuadra de la playa.</p>
+        </div>
+        <div>
+            <div class="map-card">
+                <h3 class="section-title" style="font-size:16px;">
+                    Ubicación
+                    <button class="btn-edit" onclick="editContent('direccion', 'txtAddress')"><i class="ph ph-pencil"></i> Editar</button>
+                </h3>
+                <div class="map-box"><i class="ph ph-map-pin" style="font-size:32px; color:var(--primary);"></i></div>
+                <div style="font-size: 14px; font-weight: 600;" id="txtMapAddress">Avenida 1 y Paseo 140</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registro de Reservas Próximas -->
+    <section class="reservations-section">
+        <h2>RESERVAS PRÓXIMAS</h2>
+        <table class="res-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Entrada</th>
+                    <th>Salida</th>
+                    <th>Noches</th>
+                    <th>Subtotal</th>
+                    <th>Desc.</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="resTableBody">
+                <!-- Se puebla dinámicamente -->
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<!-- Modal Administrar Fotos -->
+<div class="modal" id="photoModal">
+    <div class="modal-content">
+        <h3>Administrar Galería de Fotos</h3>
+        <p style="font-size:12px; color:var(--text-gray); margin-bottom:12px;">Ingresá URLs de imágenes separadas por línea:</p>
+        <textarea id="photoUrlsInput" rows="6"></textarea>
+        <button class="btn-reserve" onclick="savePhotos()">Guardar Cambios</button>
+    </div>
+</div>
+
+<script>
+    const ADMIN_PASS = "admin1234";
+    let isAdminMode = false;
+
+    function checkLogin() {
+        if(document.getElementById('passInput').value === ADMIN_PASS) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminWrapper').style.display = 'block';
+        } else alert('Contraseña incorrecta');
+    }
+
+    function toggleAdminMode() {
+        isAdminMode = !isAdminMode;
+        document.body.classList.toggle('admin-mode-on', isAdminMode);
+        document.getElementById('btnAdminToggle').classList.toggle('active', isAdminMode);
+    }
+
+    // FIREBASE
+    const firebaseConfig = {
+          apiKey: "AIzaSyBLHPsJQEkz4sCWPfcKXx6eMR-o9Au4vYY",
+    authDomain: "duplex-gesell.firebaseapp.com",
+    databaseURL: "https://duplex-gesell-default-rtdb.firebaseio.com",
+    projectId: "duplex-gesell",
+    storageBucket: "duplex-gesell.firebasestorage.app",
+    messagingSenderId: "183025783048",
+    appId: "1:183025783048:web:3007a01baf78a139ea9cbd",
+    measurementId: "G-PC6HC3L3GJ"
+
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const USD_RATE = 1512.76;
+    let photos = [];
+
+    // Cotización Admin
+    function calcAdminQuote() {
+        const inVal = document.getElementById('checkin').value;
+        const outVal = document.getElementById('checkout').value;
+        if(!inVal || !outVal) return;
+
+        const nights = Math.round((new Date(outVal) - new Date(inVal)) / (1000*60*60*24));
+        const subtotal = nights * 90;
+        const type = document.getElementById('discType').value;
+        const val = parseFloat(document.getElementById('discVal').value) || 0;
+
+        let desc = 0;
+        if(type === 'percent') desc = subtotal * (val / 100);
+        if(type === 'fixed') desc = val;
+
+        const total = subtotal - desc;
+        document.getElementById('lblSubtotal').innerText = `USD ${subtotal}`;
+        document.getElementById('lblDiscount').innerText = `- USD ${desc}`;
+        document.getElementById('lblTotalUSD').innerText = `USD ${total}`;
+        document.getElementById('lblTotalARS').innerText = `≈ $ ${Math.round(total * USD_RATE).toLocaleString('es-AR')} (ARS)`;
+    }
+
+    function submitAdminBooking(e) {
+        e.preventDefault();
+        const booking = {
+            guestName: document.getElementById('guestName').value + ' (Manual)',
+            phone: document.getElementById('guestPhone').value,
+            email: document.getElementById('guestEmail').value,
+            checkin: document.getElementById('checkin').value,
+            checkout: document.getElementById('checkout').value,
+            nights: 5,
+            baseTotalUSD: 450,
+            baseTotalARS: 450 * USD_RATE,
+            status: 'Confirmada',
+            createdTimestamp: new Date().toLocaleString('es-AR')
+        };
+        db.ref('reservas').push(booking, () => alert('Reserva guardada.'));
+    }
+
+    function deleteRes(key) {
+        if(confirm('¿Seguro que querés eliminar esta reserva?')) db.ref('reservas/' + key).remove();
+    }
+
+    function editContent(key, elementId) {
+    const currentText = document.getElementById(elementId).innerText;
+    const newText = window.prompt("Ingresá el nuevo texto:", currentText);
+    
+    if (newText !== null && newText.trim() !== "") {
+        db.ref('contenido/' + key).set(newText.trim())
+            .then(() => {
+                document.getElementById(elementId).innerText = newText.trim();
+                alert("¡Texto actualizado con éxito!");
+            })
+            .catch((error) => {
+                alert("Error al guardar en Firebase: " + error.message);
+            });
+    }
+
+    function openPhotoManager() {
+        document.getElementById('photoUrlsInput').value = photos.join('\n');
+        document.getElementById('photoModal').style.display = 'flex';
+    }
+
+    function savePhotos() {
+        const list = document.getElementById('photoUrlsInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+        db.ref('fotos/gallery').set(list, () => {
+            document.getElementById('photoModal').style.display = 'none';
+        });
+    }
+
+    // Carga de Firebase
+    db.ref('reservas').on('value', snap => {
+        const tbody = document.getElementById('resTableBody');
+        tbody.innerHTML = '';
+        snap.forEach(c => {
+            const r = c.val();
+            const key = c.key;
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${r.guestName}</strong></td>
+                    <td>${r.checkin}</td>
+                    <td>${r.checkout}</td>
+                    <td>${r.nights || 1}</td>
+                    <td>USD ${r.baseTotalUSD}</td>
+                    <td>${r.discountValue ? r.discountValue + '%' : '0'}</td>
+                    <td><strong>USD ${r.baseTotalUSD}</strong></td>
+                    <td><span class="badge ${r.status || 'Confirmada'}">${r.status || 'Confirmada'}</span></td>
+                    <td>
+                        <button onclick="deleteRes('${key}')" style="border:none; background:none; cursor:pointer; color:red;"><i class="ph ph-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+
+    db.ref('fotos').on('value', snap => {
+        const val = snap.val();
+        if(val && val.gallery) {
+            photos = val.gallery;
+            document.getElementById('mainPhoto').src = photos[0] || '';
+            const grid = document.getElementById('thumbnailsGrid');
+            grid.innerHTML = '';
+            photos.slice(0, 4).forEach(url => {
+                grid.innerHTML += `<div class="thumb"><img src="${url}"></div>`;
+            });
+        }
+    });
+
+    db.ref('contenido').on('value', snap => {
+        const c = snap.val();
+        if(c) {
+            if(c.titulo) document.getElementById('txtTitle').innerText = c.titulo;
+            if(c.direccion) {
+                document.getElementById('txtAddress').innerText = c.direccion;
+                document.getElementById('txtMapAddress').innerText = c.direccion;
+            }
+            if(c.descripcion) document.getElementById('txtDescription').innerText = c.descripcion;
+        }
+    });
+</script>
+</body>
+</html>
