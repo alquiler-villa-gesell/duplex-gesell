@@ -7,7 +7,7 @@
     <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <!-- Phosphor Icons para iconos profesionales planos -->
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
@@ -20,7 +20,7 @@
             --bg-light: #f8fafc;
             --radius-lg: 16px;
             --radius-md: 12px;
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -46,8 +46,8 @@
         .photo-nav.next { right: 16px; }
         .photo-counter { position: absolute; bottom: 16px; left: 16px; background: rgba(0,0,0,0.7); color: white; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 20px; backdrop-filter: blur(4px); }
 
-        .thumbnails-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
-        .thumb { height: 90px; border-radius: var(--radius-md); overflow: hidden; cursor: pointer; opacity: 0.7; transition: 0.2s; border: 2px solid transparent; }
+        .thumbnails-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 12px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
+        .thumb { height: 75px; border-radius: var(--radius-md); overflow: hidden; cursor: pointer; opacity: 0.7; transition: 0.2s; border: 2px solid transparent; }
         .thumb.active, .thumb:hover { opacity: 1; border-color: var(--primary); }
         .thumb img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -62,6 +62,13 @@
         .form-group:first-child { border-right: 1px solid var(--border); }
         .form-group label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-dark); margin-bottom: 2px; }
         .form-group input, .form-group select { width: 100%; border: none; outline: none; font-size: 14px; color: var(--text-dark); background: transparent; }
+
+        /* Visual Calendar preview */
+        .calendar-box { margin-bottom: 16px; background: var(--bg-light); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); }
+        .calendar-header { font-size: 12px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; text-align: center; }
+        .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; font-size: 11px; }
+        .cal-day { padding: 6px 2px; border-radius: 6px; background: #ffffff; border: 1px solid var(--border); color: var(--text-dark); }
+        .cal-day.booked { background: rgba(255, 56, 92, 0.15); color: #c13515; font-weight: bold; border-color: var(--primary); }
 
         .price-breakdown { font-size: 14px; margin-bottom: 20px; }
         .price-row { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-gray); }
@@ -87,7 +94,7 @@
         .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
 
         .map-card { background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
-        .map-box { height: 160px; background: #e2e8f0; border-radius: var(--radius-md); margin-bottom: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--text-gray); position: relative; }
+        .map-box { height: 160px; background: #e2e8f0; border-radius: var(--radius-md); margin-bottom: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--text-gray); }
 
         /* Amenities Grid */
         .amenities-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 40px; }
@@ -106,12 +113,12 @@
         .lightbox img { max-width: 90%; max-height: 85vh; border-radius: 8px; }
         .lightbox-close { position: absolute; top: 24px; right: 24px; color: white; font-size: 32px; cursor: pointer; }
 
-        /* Error message */
         .error-msg { color: #dc2626; font-size: 12px; font-weight: 600; margin-bottom: 12px; display: none; text-align: center; }
 
         @media (max-width: 900px) {
             .main-grid { grid-template-columns: 1fr; }
             .features-strip { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+            .thumbnails-grid { grid-template-columns: repeat(4, 1fr); }
             .two-cols, .faq-grid { grid-template-columns: 1fr; }
             .amenities-grid { grid-template-columns: repeat(2, 1fr); }
             .main-photo-wrapper { height: 280px; }
@@ -133,7 +140,7 @@
                 <button class="photo-nav prev" onclick="prevSlide()"><i class="ph ph-caret-left"></i></button>
                 <img id="mainPhoto" class="main-photo" src="" onclick="openLightbox()" alt="Foto Dúplex">
                 <button class="photo-nav next" onclick="nextSlide()"><i class="ph ph-caret-right"></i></button>
-                <div class="photo-counter" id="photoCounter">1 / 1</div>
+                <div class="photo-counter" id="photoCounter">1 / 18</div>
             </div>
             <div class="thumbnails-grid" id="thumbnailsGrid">
                 <!-- Se cargan dinámicamente -->
@@ -145,6 +152,13 @@
             <div class="stay-card">
                 <h3>Tu estadía</h3>
                 <p class="subtitle">Completá tus datos para solicitar la reserva</p>
+
+                <div class="calendar-box">
+                    <div class="calendar-header">📅 Fechas reservadas este mes</div>
+                    <div class="calendar-days" id="calendarDays">
+                        <!-- Fechas en rojo se generan dinámicamente -->
+                    </div>
+                </div>
 
                 <form id="bookingForm" onsubmit="submitBooking(event)">
                     <div class="form-box">
@@ -231,7 +245,7 @@
     <div class="two-cols">
         <div>
             <h2 class="section-title">Tu lugar en Villa Gesell</h2>
-            <p class="section-desc" id="txtDescription">Disfrutá de un dúplex cómodo y funcional, ubicado a solo una cuadra de la playa. Ideal para parejas, familias o amigos que buscan descanso, comodidad y una ubicación privilegiada.</p>
+            <p class="section-desc" id="txtDescription">Disfrutá de un dúplex cómodo y funcional, ubicado a solo una cuadra de la playa. Ideal para parejas, familias o amigos que buscan descanso, comodidad y una ubicación privileged.</p>
         </div>
         <div>
             <div class="map-card">
@@ -288,38 +302,34 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE (REEMPLAZAR CON TUS CLAVES SI ES NECESARIO)
+    // CONFIGURACIÓN FIREBASE 
     const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "tu-proyecto.firebaseapp.com",
-        databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
-        projectId: "tu-proyecto",
-        storageBucket: "tu-proyecto.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "1:123456789:web:abc123def456"
+        apiKey: "AIzaSyBLHPsJQEkz4sCWPfcKXx6eMR-o9Au4vYY",
+    authDomain: "duplex-gesell.firebaseapp.com",
+    databaseURL: "https://duplex-gesell-default-rtdb.firebaseio.com",
+    projectId: "duplex-gesell",
+    storageBucket: "duplex-gesell.firebasestorage.app",
+    messagingSenderId: "183025783048",
+    appId: "1:183025783048:web:3007a01baf78a139ea9cbd",
+    measurementId: "G-PC6HC3L3GJ"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const USD_RATE = 1512.76;
-    let photos = [
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80"
-    ];
+    let photos = [];
     let currentPhotoIdx = 0;
     let existingReservations = [];
 
-    // Lógica Galería
     function updateGalleryUI() {
-        if(photos.length === 0) return;
+        if (!photos || photos.length === 0) return;
         document.getElementById('mainPhoto').src = photos[currentPhotoIdx];
         document.getElementById('photoCounter').innerText = `${currentPhotoIdx + 1} / ${photos.length}`;
         
         const grid = document.getElementById('thumbnailsGrid');
         grid.innerHTML = '';
-        photos.slice(0, 4).forEach((url, i) => {
+        
+        photos.forEach((url, i) => {
             const thumb = document.createElement('div');
             thumb.className = `thumb ${i === currentPhotoIdx ? 'active' : ''}`;
             thumb.onclick = () => { currentPhotoIdx = i; updateGalleryUI(); };
@@ -328,11 +338,42 @@
         });
     }
 
-    function nextSlide() { currentPhotoIdx = (currentPhotoIdx + 1) % photos.length; updateGalleryUI(); }
-    function prevSlide() { currentPhotoIdx = (currentPhotoIdx - 1 + photos.length) % photos.length; updateGalleryUI(); }
+    function renderCalendar() {
+        const calGrid = document.getElementById('calendarDays');
+        if(!calGrid) return;
+        calGrid.innerHTML = '';
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+
+        for (let i = 1; i <= 31; i++) {
+            const currentStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const isBooked = existingReservations.some(r => {
+                if(r.status === 'Cancelada') return false;
+                return currentStr >= r.checkin && currentStr < r.checkout;
+            });
+
+            const dayDiv = document.createElement('div');
+            dayDiv.className = `cal-day ${isBooked ? 'booked' : ''}`;
+            dayDiv.innerText = i;
+            calGrid.appendChild(dayDiv);
+        }
+    }
+
+    function nextSlide() { 
+        if(photos.length === 0) return;
+        currentPhotoIdx = (currentPhotoIdx + 1) % photos.length; 
+        updateGalleryUI(); 
+    }
+    function prevSlide() { 
+        if(photos.length === 0) return;
+        currentPhotoIdx = (currentPhotoIdx - 1 + photos.length) % photos.length; 
+        updateGalleryUI(); 
+    }
     setInterval(nextSlide, 4000);
 
     function openLightbox() {
+        if(photos.length === 0) return;
         document.getElementById('lightboxImg').src = photos[currentPhotoIdx];
         document.getElementById('lightbox').style.display = 'flex';
     }
@@ -340,7 +381,6 @@
 
     function toggleFaq(el) { el.classList.toggle('open'); }
 
-    // Cotización y Fechas
     function calculateQuote() {
         const inVal = document.getElementById('checkin').value;
         const outVal = document.getElementById('checkout').value;
@@ -390,7 +430,7 @@
         e.preventDefault();
         const inVal = document.getElementById('checkin').value;
         const outVal = document.getElementById('checkout').value;
-        const nights = parseInt(document.getElementById('lblNights').innerText);
+        const nights = parseInt(document.getElementById('lblNights').innerText) || 1;
         const totalUSD = nights * 90;
 
         const booking = {
@@ -416,20 +456,21 @@
         });
     }
 
-    // Carga de Firebase
+    // Firebase realtime listeners
+    db.ref('fotos/gallery').on('value', snap => {
+        const val = snap.val();
+        if(val && Array.isArray(val)) {
+            photos = val;
+            currentPhotoIdx = 0;
+            updateGalleryUI();
+        }
+    });
+
     db.ref('reservas').on('value', snap => {
         existingReservations = [];
         snap.forEach(c => { existingReservations.push(c.val()); });
         calculateQuote();
-    });
-
-    db.ref('fotos').on('value', snap => {
-        const val = snap.val();
-        if(val) {
-            if(Array.isArray(val.gallery)) photos = val.gallery;
-            else if(val.imgMain) photos = [val.imgMain, val.imgSub1, val.imgSub2].filter(Boolean);
-            updateGalleryUI();
-        }
+        renderCalendar();
     });
 
     db.ref('contenido').on('value', snap => {
@@ -443,8 +484,6 @@
             if(c.descripcion) document.getElementById('txtDescription').innerText = c.descripcion;
         }
     });
-
-    updateGalleryUI();
 </script>
 </body>
 </html>
