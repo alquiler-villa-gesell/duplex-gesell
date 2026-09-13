@@ -295,10 +295,12 @@
     let isAdminMode = false;
 
     function checkLogin() {
-        if(document.getElementById('passInput').value === ADMIN_PASS) {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('adminWrapper').style.display = 'block';
-        } else alert('Contraseña incorrecta');
+        const inputVal = document.getElementById('passInput').value.trim();
+    if (inputVal === ADMIN_PASS) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('adminWrapper').style.display = 'block';
+    } else {
+        alert('Contraseña incorrecta. Intentalo de nuevo.');
     }
 
     function toggleAdminMode() {
